@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cruz-B Enterprise</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'cb-brown': '#5C3A21',
+                        'cb-brown-dark': '#3D2514',
+                        'cb-brown-light': '#8C5A37',
+                        'cb-pink': '#E8B4B8',
+                        'cb-pink-light': '#F4D3D6',
+                        'cb-milk': '#FAF5EF',
+                        'cb-milk-dark': '#EFE4D6',
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            background-color: #FAF5EF;
+            color: #5C3A21;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between">
+
+    <!-- TOP ROLE DEMO SWITCHER BAR -->
+    <div class="bg-cb-brown-dark text-cb-milk px-4 py-2 text-xs md:text-sm flex flex-wrap justify-between items-center shadow-md border-b border-cb-brown">
+        <div class="flex items-center gap-2">
+            <span class="font-bold text-cb-pink">🔑 Live Simulator Role:</span>
+            <select id="roleSelector" onchange="changeRole(this.value)" class="bg-cb-brown text-cb-milk px-2 py-1 rounded border border-cb-pink text-xs focus:outline-none">
+                <option value="public">Public Visitor</option>
+                <option value="secondary_admin">Secondary Admin</option>
+                <option value="super_admin" selected>Super Admin (Sole Creator - You)</option>
+            </select>
+        </div>
+        <div class="text-cb-pink-light text-xs mt-1 sm:mt-0">
+            Current Access: <span id="accessBadge" class="font-semibold text-cb-milk bg-cb-brown px-2 py-0.5 rounded">Super Admin</span>
+        </div>
+    </div>
+
+    <!-- HEADER / NAVIGATION -->
+    <header class="bg-cb-brown text-cb-milk shadow-lg sticky top-0 z-40 border-b border-cb-brown-light">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-wrap justify-between items-center gap-4">
+            <!-- Brand Logo -->
+            <div class="flex items-center gap-3 cursor-pointer" onclick="switchTab('store')">
+                <div class="w-10 h-10 rounded-full bg-cb-pink text-cb-brown font-extrabold flex items-center justify-center text-xl shadow">
+                    CB
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-wide text-cb-milk">Cruz-B Enterprise</h1>
+                    <p class="text-xs text-cb-pink-light">Excellence & Premium Value</p>
+                </div>
+            </div>
+
+            <!-- Currency & Navigation Links -->
+            <div class="flex items-center gap-4 flex-wrap">
+                <!-- Currency Switcher (Visible to Public & Admins) -->
+                <div class="flex items-center gap-1 bg-cb-brown-dark px-3 py-1.5 rounded-lg border border-cb-brown-light">
+                    <i data-lucide="coins" class="w-4 h-4 text-cb-pink"></i>
+                    <select id="currencySelector" onchange="updateCurrency(this.value)" class="bg-transparent text-cb-milk text-sm font-semibold focus:outline-none">
+                        <option value="USD" class="bg-cb-brown text-cb-milk">USD ($)</option>
+                        <option value="NGN" class="bg-cb-brown text-cb-milk">NGN (₦)</option>
+                        <option value="EUR" class="bg-cb-brown text-cb-milk">EUR (€)</option>
+                        <option value="GBP" class="bg-cb-brown text-cb-milk">GBP (£)</option>
+                    </select>
+                </div>
+
+                <!-- Nav Tabs -->
+                <nav class="flex gap-2">
+                    <button onclick="switchTab('store')" id="nav-store" class="nav-btn bg-cb-pink text-cb-brown px-3 py-1.5 rounded-lg text-sm font-medium transition hover:bg-cb-pink-light">Store</button>
+                    <button onclick="switchTab('about')" id="nav-about" class="nav-btn text-cb-milk hover:bg-cb-brown-light px-3 py-1.5 rounded-lg text-sm font-medium transition">About Us</button>
+                    <button onclick="switchTab('socials')" id="nav-socials" class="nav-btn text-cb-milk hover:bg-cb-brown-light px-3 py-1.5 rounded-lg text-sm font-medium transition">Socials</button>
+                    <button onclick="switchTab('contact')" id="nav-contact" class="nav-btn text-cb-milk hover:bg-cb-brown-light px-3 py-1.5 rounded-lg text-sm font-medium transition">Contact</button>
+                    
+                    <!-- Admin Only Tabs -->
+                    <button onclick="switchTab('admin-dashboard')" id="nav-admin" class="nav-btn hidden text-cb-pink bg-cb-brown-dark border border-cb-pink hover:bg-cb-brown-light px-3 py-1.5 rounded-lg text-sm font-medium transition">Admin Panel</button>
+                </nav>
+
+                <!-- Cart Button -->
+                <button onclick="toggleCartModal()" class="relative bg-cb-pink text-cb-brown p-2 rounded-lg hover:bg-cb-pink-light transition shadow">
+                    <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+                    <span id="cartCount" class="absolute -top-2 -right-2 bg-cb-brown text-cb-milk text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold border border-cb-pink">0</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT CONTAINER -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-grow w-full">
+
+        <!-- ALERTS / NOTIFICATION CONTAINER -->
+        <div id="notificationArea" class="hidden mb-6 p-4 rounded-lg bg-cb-pink-light border border-cb-pink text-cb-brown font-medium shadow flex items-center justify-between">
+            <span id="notificationText">Notification message</span>
+            <button onclick="hideNotification()" class="text-cb-brown font-bold hover:text-cb-brown-dark">✕</button>
+        </div>
+
+        <!-- 1. STORE CATALOG TAB -->
+        <section id="tab-store" class="tab-content">
+            <div class="flex flex-wrap justify-between items-center mb-6 gap-4">
+                <div>
+                    <h2 class="text-2xl font-bold text-cb-brown">Product Catalog</h2>
+                    <p class="text-sm text-cb-brown-light">Official items curated exclusively by Cruz-B Enterprise</p>
+                </div>
+                <!-- Admin Add Product Button (Visible only to Admins) -->
+                <div id="adminProductControls" class="flex gap-3">
+                    <button onclick="openAddProductModal()" class="bg-cb-brown text-cb-milk px-4 py-2 rounded-lg font-medium text-sm flex items-center gap-2 shadow hover:bg-cb-brown-dark transition">
+                        <i data-lucide="plus-circle" class="w-4 h-4 text-cb-pink"></i> Add New Product
+                    </button>
+                </div>
+            </div>
+
+            <!-- STORE PRODUCTS GRID -->
+            <div id="productsGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                <!-- Dynamically populated or empty message -->
+            </div>
+
+            <!-- EMPTY STORE MESSAGE (DEFAULT INITIAL STATE) -->
+            <div id="emptyStoreMessage" class="text-center py-16 bg-white/60 rounded-xl border-2 border-dashed border-cb-pink p-8 my-4">
+                <i data-lucide="package-x" class="w-16 h-16 text-cb-brown-light mx-auto mb-4"></i>
+                <h3 class="text-xl font-bold text-cb-brown mb-2">No Products Available Yet</h3>
+                <p class="text-cb-brown-light max-w-md mx-auto text-sm mb-6">
+                    Our inventory is currently empty. The website creator/admin will push items from the POS software or add catalog products shortly.
+                </p>
+                <div id="emptyStoreAdminHint" class="bg-cb-milk p-4 rounded-lg border border-cb-pink max-w-md mx-auto text-xs text-cb-brown text-left">
+                    <strong>💡 Admin Hint:</strong> As a Super Admin, you can use the <button onclick="switchTab('admin-dashboard')" class="underline text-cb-brown-dark font-bold">Admin Panel</button> to click "Push POS Inventory to Live Site" or manually add products above!
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. ABOUT US TAB -->
+        <section id="tab-about" class="tab-content hidden">
+            <div class="bg-white rounded-xl shadow-md p-6 sm:p-10 border border-cb-pink-light">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-cb-brown">About Cruz-B Enterprise</h2>
+                    <!-- Admin Edit Toggle -->
+                    <button id="editAboutBtn" onclick="toggleEditAbout()" class="hidden bg-cb-pink text-cb-brown px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-cb-pink-light transition flex items-center gap-1">
+                        <i data-lucide="edit-3" class="w-3.5 h-3.5"></i> <span id="aboutEditLabel">Edit About Page</span>
+                    </button>
+                </div>
+
+                <!-- Display Mode -->
+                <div id="aboutDisplayMode" class="space-y-6 text-cb-brown">
+                    <p id="aboutStoryText" class="text-lg leading-relaxed text-cb-brown-dark">
+                        Welcome to Cruz-B Enterprise. We are dedicated to providing unmatched quality, exceptional services, and tailored products designed to exceed customer expectations. Built on integrity and innovation, Cruz-B Enterprise connects seamlessly with modern retail standards.
+                    </p>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
+                        <div class="bg-cb-milk p-5 rounded-lg border border-cb-pink">
+                            <h3 id="aboutCard1Title" class="font-bold text-lg text-cb-brown mb-2">Our Mission</h3>
+                            <p id="aboutCard1Desc" class="text-sm text-cb-brown-light">To deliver high-grade products and reliable services tailored directly to our client requests with transparency and quality.</p>
+                        </div>
+                        <div class="bg-cb-milk p-5 rounded-lg border border-cb-pink">
+                            <h3 id="aboutCard2Title" class="font-bold text-lg text-cb-brown mb-2">Our Vision</h3>
+                            <p id="aboutCard2Desc" class="text-sm text-cb-brown-light">To be a leading enterprise recognized across global commerce for efficiency, innovation, and multi-currency accessibility.</p>
+                        </div>
+                        <div class="bg-cb-milk p-5 rounded-lg border border-cb-pink">
+                            <h3 id="aboutCard3Title" class="font-bold text-lg text-cb-brown mb-2">Core Values</h3>
+                            <p id="aboutCard3Desc" class="text-sm text-cb-brown-light">Customer Satisfaction, Continuous Innovation, Integrity, and Absolute Transparency in all transactions.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Admin Edit Form (Hidden by default) -->
+                <form id="aboutEditForm" onsubmit="saveAboutContent(event)" class="hidden space-y-4 pt-4 border-t border-cb-pink">
+                    <div>
+                        <label class="block text-xs font-bold text-cb-brown mb-1">Main Brand Story</label>
+                        <textarea id="editStoryInput" rows="4" class="w-full p-3 rounded-lg border border-cb-brown bg-cb-milk text-cb-brown focus:outline-none"></textarea>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-cb-brown mb-1">Card 1 Description</label>
+                            <textarea id="editCard1Input" rows="3" class="w-full p-2 rounded-lg border border-cb-brown bg-cb-milk text-xs text-cb-brown"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-cb-brown mb-1">Card 2 Description</label>
+                            <textarea id="editCard2Input" rows="3" class="w-full p-2 rounded-lg border border-cb-brown bg-cb-milk text-xs text-cb-brown"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-cb-brown mb-1">Card 3 Description</label>
+                            <textarea id="editCard3Input" rows="3" class="w-full p-2 rounded-lg border border-cb-brown bg-cb-milk text-xs text-cb-brown"></textarea>
+                        </div>
+                    </div>
+                    <div class="flex gap-2">
+                        <button type="submit" class="bg-cb-brown text-cb-milk px-4 py-2 rounded-lg text-sm font-bold hover:bg-cb-brown-dark">Save Changes</button>
+                        <button type="button" onclick="toggleEditAbout()" class="bg-cb-pink text-cb-brown px-4 py-2 rounded-lg text-sm font-bold hover:bg-cb-pink-light">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <!-- 3. SOCIALS TAB -->
+        <section id="tab-socials" class="tab-content hidden">
+            <div class="bg-white rounded-xl shadow-md p-6 sm:p-10 border border-cb-pink-light">
+                <div class="flex flex-wrap justify-between items-center mb-6 gap-4">
+                    <div>
+                        <h2 class="text-2xl font-bold text-cb-brown">Official Social Handles</h2>
+                        <p class="text-sm text-cb-brown-light">Connect with Cruz-B Enterprise across official platforms</p>
+                    </div>
+                    <!-- Admin Add Social Button -->
+                    <button id="addSocialBtn" onclick="openAddSocialModal()" class="hidden bg-cb-brown text-cb-milk px-3 py-2 rounded-lg text-xs font-bold hover:bg-cb-brown-dark transition flex items-center gap-1 shadow">
+                        <i data-lucide="plus" class="w-4 h-4 text-cb-pink"></i> Add Social Handle
+                    </button>
+                </div>
+
+                <!-- Socials List -->
+                <div id="socialsGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. CONTACT TAB -->
+        <section id="tab-contact" class="tab-content hidden">
+            <div class="max-w-2xl mx-auto bg-white rounded-xl shadow-md p-6 sm:p-8 border border-cb-pink-light">
+                <h2 class="text-2xl font-bold text-cb-brown mb-2">Get in Touch</h2>
+                <p class="text-sm text-cb-brown-light mb-6">Have questions or inquiries? Message Cruz-B Enterprise directly.</p>
+                
+                <form onsubmit="handleContactSubmit(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-cb-brown mb-1">Your Full Name</label>
+                        <input type="text" required placeholder="John Doe" class="w-full p-3 rounded-lg border border-cb-pink bg-cb-milk text-cb-brown text-sm focus:outline-none focus:border-cb-brown">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-cb-brown mb-1">Email Address</label>
+                        <input type="email" required placeholder="john@example.com" class="w-full p-3 rounded-lg border border-cb-pink bg-cb-milk text-cb-brown text-sm focus:outline-none focus:border-cb-brown">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-cb-brown mb-1">Message</label>
+                        <textarea rows="4" required placeholder="How can Cruz-B Enterprise assist you today?" class="w-full p-3 rounded-lg border border-cb-pink bg-cb-milk text-cb-brown text-sm focus:outline-none focus:border-cb-brown"></textarea>
+                    </div>
+                    <button type="submit" class="w-full bg-cb-brown text-cb-milk py-3 rounded-lg font-bold text-sm shadow hover:bg-cb-brown-dark transition">Send Message</button>
+                </form>
+            </div>
+        </section>
+
+        <!-- 5. PRIVATE ADMIN PANEL (ACCESSIBLE TO ADMINS ONLY) -->
+        <section id="tab-admin-dashboard" class="tab-content hidden">
+            <div class="space-y-8">
+                
+                <!-- SUPER ADMIN ONLY: POS INVENTORY PUSH PANEL -->
+                <div id="posSyncCard" class="bg-cb-brown text-cb-milk p-6 sm:p-8 rounded-xl shadow-lg border border-cb-brown-light">
+                    <div class="flex flex-wrap justify-between items-center gap-4 mb-4">
+                        <div>
+                            <span class="bg-cb-pink text-cb-brown text-xs font-extrabold px-2.5 py-1 rounded uppercase tracking-wider">Super Admin Exclusive</span>
+                            <h2 class="text-2xl font-bold text-cb-milk mt-2">POS Software Inventory Sync</h2>
+                            <p class="text-xs text-cb-pink-light">Push product updates and stock levels from your local POS software directly live to Cruz-B Enterprise.</p>
+                        </div>
+                        <button onclick="executePOSPush()" id="posPushBtn" class="bg-cb-pink text-cb-brown px-6 py-3 rounded-xl font-bold text-sm shadow hover:bg-cb-pink-light transition flex items-center gap-2">
+                            <i data-lucide="refresh-cw" class="w-5 h-5"></i> Push POS Inventory to Live Site
+                        </button>
+                    </div>
+
+                    <!-- Sync Status Output -->
+                    <div id="posSyncProgress" class="hidden bg-cb-brown-dark p-4 rounded-lg border border-cb-brown mt-4">
+                        <div class="flex justify-between text-xs text-cb-pink mb-1">
+                            <span>Syncing POS Database...</span>
+                            <span id="syncPercent">0%</span>
+                        </div>
+                        <div class="w-full bg-cb-brown rounded-full h-2">
+                            <div id="syncBar" class="bg-cb-pink h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                        </div>
+                    </div>
+
+                    <!-- POS Audit Log -->
+                    <div class="mt-6 pt-4 border-t border-cb-brown-light">
+                        <h4 class="text-xs font-bold text-cb-pink uppercase tracking-wider mb-2">Recent POS Sync Audit Logs</h4>
+                        <div id="posLogsList" class="text-xs space-y-1 text-cb-pink-light font-mono">
+                            <div>• [2026-09-22 14:00] System initialized. Ready for initial POS push.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECRET: ADMIN USER MANAGEMENT (SUPER ADMIN ONLY - HIDDEN FROM PUBLIC & SECONDARY ADMINS) -->
+                <div id="secretAdminManagementSection" class="bg-white p-6 sm:p-8 rounded-xl shadow-md border border-cb-pink">
+                    <div class="flex justify-between items-center mb-4">
+                        <div>
+                            <span class="bg-cb-brown text-cb-pink text-xs font-bold px-2 py-0.5 rounded">Strictly Hidden from Public & Secondary Admins</span>
+                            <h3 class="text-xl font-bold text-cb-brown mt-1">Admin User Management</h3>
+                        </div>
+                        <button onclick="openInviteAdminModal()" class="bg-cb-brown text-cb-milk px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-cb-brown-dark">
+                            + Grant New Admin Access
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm text-cb-brown">
+                            <thead class="bg-cb-milk text-xs uppercase font-bold border-b border-cb-pink">
+                                <tr>
+                                    <th class="p-3">User / Email</th>
+                                    <th class="p-3">Role</th>
+                                    <th class="p-3">Permissions</th>
+                                    <th class="p-3">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="adminUsersTable">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="bg-cb-brown-dark text-cb-milk py-6 border-t border-cb-brown">
+        <div class="max-w-7xl mx-auto px-4 text-center text-xs text-cb-pink-light space-y-2">
+            <p>© 2026 Cruz-B Enterprise. All Rights Reserved.</p>
+            <p>Theme: Strict Warm Brown (#5C3A21), Soft Pink (#E8B4B8), and Cream Milk (#FAF5EF)</p>
+        </div>
+    </footer>
+
+    <!-- MODAL 1: SHOPPING CART / CHECKOUT MODAL -->
+    <div id="cartModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl max-w-md w-full p-6 shadow-2xl border border-cb-pink">
+            <div class="flex justify-between items-center mb-4 pb-2 border-b border-cb-pink-light">
+                <h3 class="font-bold text-lg text-cb-brown flex items-center gap-2">
+                    <i data-lucide="shopping-bag" class="w-5 h-5 text-cb-pink"></i> Shopping Cart
+                </h3>
+                <button onclick="toggleCartModal()" class="text-cb-brown font-bold hover:text-cb-brown-dark">✕</button>
+            </div>
+            <div id="cartItemsList" class="space-y-3 max-h-60 overflow-y-auto mb-4">
+                <!-- Dynamically populated -->
+            </div>
+            <div class="border-t border-cb-pink-light pt-3 mb-4 flex justify-between items-center font-bold text-cb-brown">
+                <span>Total Amount:</span>
+                <span id="cartTotalDisplay" class="text-lg text-cb-brown-dark">$0.00</span>
+            </div>
+            <button onclick="checkoutCart()" class="w-full bg-cb-brown text-cb-milk py-2.5 rounded-lg font-bold text-sm hover:bg-cb-brown-dark transition">Proceed to Checkout</button>
+        </div>
+    </div>
+
+    <!-- MODAL 2: ADD PRODUCT MODAL (ADMIN) -->
+    <div id="addProductModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl max-w-md w-full p-6 shadow-2xl border border-cb-pink">
+            <div class="flex justify-between items-center mb-4 pb-2 border-b border-cb-pink-light">
+                <h3 class="font-bold text-lg text-cb-brown">Add New Catalog Product</h3>
+                <button onclick="closeAddProductModal()" class="text-cb-brown font-bold">✕</button>
+            </div>
+            <form onsubmit="handleCreateProduct(event)" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-bold text-cb-brown mb-1">Product Title</label>
+                    <input type="text" id="newProdTitle" required class="w-full p-2 text-xs border rounded bg-cb-milk text-cb-brown">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-cb-brown mb-1">Price (Base USD $)</label>
+                    <input type="number" step="0.01" id="newProdPrice" required class="w-full p-2 text-xs border rounded bg-cb-milk text-cb-brown">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-cb-brown mb-1">Category</label>
+                    <input type="text" id="newProdCat" required placeholder="e.g. Apparel, Accessories" class="w-full p-2 text-xs border rounded bg-cb-milk text-cb-brown">
+                </div>
+                <div class="flex gap-2 pt-2">
+                    <button type="submit" class="flex-1 bg-cb-brown text-cb-milk py-2 rounded text-xs font-bold hover:bg-cb-brown-dark">Add Product</button>
+                    <button type="button" onclick="closeAddProductModal()" class="bg-cb-pink text-cb-brown px-4 py-2 rounded text-xs font-bold">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 3: ADD SOCIAL HANDLE MODAL (ADMIN) -->
+    <div id="addSocialModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl max-w-sm w-full p-6 shadow-2xl border border-cb-pink">
+            <div class="flex justify-between items-center mb-4 pb-2 border-b border-cb-pink-light">
+                <h3 class="font-bold text-lg text-cb-brown">Add Official Social Handle</h3>
+                <button onclick="closeAddSocialModal()" class="text-cb-brown font-bold">✕</button>
+            </div>
+            <form onsubmit="handleCreateSocial(event)" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-bold text-cb-brown mb-1">Platform Name</label>
+                    <input type="text" id="newSocialPlatform" required placeholder="e.g. Instagram, WhatsApp" class="w-full p-2 text-xs border rounded bg-cb-milk text-cb-brown">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-cb-brown mb-1">Handle / Username</label>
+                    <input type="text" id="newSocialHandle" required placeholder="@cruzb_enterprise" class="w-full p-2 text-xs border rounded bg-cb-milk text-cb-brown">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-cb-brown mb-1">Direct URL</label>
+                    <input type="url" id="newSocialUrl" required placeholder="https://..." class="w-full p-2 text-xs border rounded bg-cb-milk text-cb-brown">
+                </div>
+                <div class="flex gap-2 pt-2">
+                    <button type="submit" class="flex-1 bg-cb-brown text-cb-milk py-2 rounded text-xs font-bold hover:bg-cb-brown-dark">Add Handle</button>
+                    <button type="button" onclick="closeAddSocialModal()" class="bg-cb-pink text-cb-brown px-4 py-2 rounded text-xs font-bold">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 4: INVITE ADMIN MODAL (SUPER ADMIN ONLY) -->
+    <div id="inviteAdminModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl max-w-sm w-full p-6 shadow-2xl border border-cb-pink">
+            <div class="flex justify-between items-center mb-4 pb-2 border-b border-cb-pink-light">
+                <h3 class="font-bold text-lg text-cb-brown">Grant Secondary Admin Access</h3>
+                <button onclick="closeInviteAdminModal()" class="text-cb-brown font-bold">✕</button>
+            </div>
+            <form onsubmit="handleInviteAdmin(event)" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-bold text-cb-brown mb-1">Admin Email Address</label>
+                    <input type="email" id="newAdminEmail" required placeholder="manager@cruzb.com" class="w-full p-2 text-xs border rounded bg-cb-milk text-cb-brown">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-cb-brown mb-1">Role Assigned</label>
+                    <select id="newAdminRole" class="w-full p-2 text-xs border rounded bg-cb-milk text-cb-brown font-semibold">
+                        <option value="Secondary Admin">Secondary Admin</option>
+                    </select>
+                </div>
+                <div class="flex gap-2 pt-2">
+                    <button type="submit" class="flex-1 bg-cb-brown text-cb-milk py-2 rounded text-xs font-bold hover:bg-cb-brown-dark">Grant Access</button>
+                    <button type="button" onclick="closeInviteAdminModal()" class="bg-cb-pink text-cb-brown px-4 py-2 rounded text-xs font-bold">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT APPLICATION LOGIC -->
+    <script>
+        // APPLICATION STATE
+        let currentRole = 'super_admin'; // 'public', 'secondary_admin', 'super_admin'
+        let currentCurrency = 'USD';
+        
+        const currencyRates = {
+            USD: { symbol: '$', rate: 1.0 },
+            NGN: { symbol: '₦', rate: 1500.0 },
+            EUR: { symbol: '€', rate: 0.92 },
+            GBP: { symbol: '£', rate: 0.78 }
+        };
+
+        // Initially Empty Products List
+        let products = [];
+
+        // Sample POS software push data payload
+        const posDatabasePayload = [
+            { id: 101, title: 'Cruz-B Signature Leather Wallet', priceUSD: 45.00, category: 'Accessories' },
+            { id: 102, title: 'Premium Cotton Embroidered Polo', priceUSD: 65.00, category: 'Apparel' },
+            { id: 103, title: 'Cruz-B Executive Pen & Journal Set', priceUSD: 30.00, category: 'Stationery' },
+            { id: 104, title: 'Custom Engraved Wristwatch', priceUSD: 180.00, category: 'Luxury' }
+        ];
+
+        let socials = [
+            { id: 1, platform: 'Instagram', handle: '@cruzb_enterprise', url: 'https://instagram.com' },
+            { id: 2, platform: 'WhatsApp', handle: '+234 800 CRUZ B', url: 'https://whatsapp.com' },
+            { id: 3, platform: 'LinkedIn', handle: 'Cruz-B Enterprise Ltd', url: 'https://linkedin.com' }
+        ];
+
+        let adminUsers = [
+            { id: 1, email: 'owner@cruzb.com', role: 'Super Admin (Sole Creator)', permissions: 'Full Master Access & POS Sync' },
+            { id: 2, email: 'assistant@cruzb.com', role: 'Secondary Admin', permissions: 'Manage Products & Content' }
+        ];
+
+        let cart = [];
+
+        // INITIALIZATION
+        window.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            updateRoleUI();
+            renderProducts();
+            renderSocials();
+            renderAdminUsers();
+        });
+
+        // ROLE MANAGEMENT
+        function changeRole(role) {
+            currentRole = role;
+            const badge = document.getElementById('accessBadge');
+            if (role === 'public') badge.innerText = 'Public Visitor';
+            if (role === 'secondary_admin') badge.innerText = 'Secondary Admin';
+            if (role === 'super_admin') badge.innerText = 'Super Admin (You)';
+            
+            updateRoleUI();
+            
+            // Redirect to store if on admin tab when switching to public
+            if (role === 'public') {
+                switchTab('store');
+            }
+            showNotification(`Switched simulator role to: ${badge.innerText}`);
+        }
+
+        function updateRoleUI() {
+            const adminNavBtn = document.getElementById('nav-admin');
+            const adminProdControls = document.getElementById('adminProductControls');
+            const addSocialBtn = document.getElementById('addSocialBtn');
+            const editAboutBtn = document.getElementById('editAboutBtn');
+            const posSyncCard = document.getElementById('posSyncCard');
+            const secretAdminMgmt = document.getElementById('secretAdminManagementSection');
+
+            if (currentRole === 'public') {
+                adminNavBtn.classList.add('hidden');
+                adminProdControls.classList.add('hidden');
+                addSocialBtn.classList.add('hidden');
+                editAboutBtn.classList.add('hidden');
+            } else if (currentRole === 'secondary_admin') {
+                adminNavBtn.classList.remove('hidden');
+                adminProdControls.classList.remove('hidden');
+                addSocialBtn.classList.remove('hidden');
+                editAboutBtn.classList.remove('hidden');
+                posSyncCard.classList.add('hidden'); // Only Super Admin has POS push
+                secretAdminMgmt.classList.add('hidden'); // Completely hidden from secondary admin
+            } else if (currentRole === 'super_admin') {
+                adminNavBtn.classList.remove('hidden');
+                adminProdControls.classList.remove('hidden');
+                addSocialBtn.classList.remove('hidden');
+                editAboutBtn.classList.remove('hidden');
+                posSyncCard.classList.remove('hidden');
+                secretAdminMgmt.classList.remove('hidden');
+            }
+            renderProducts();
+            renderSocials();
+        }
+
+        // TAB SWITCHING
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.nav-btn').forEach(el => {
+                el.classList.remove('bg-cb-pink', 'text-cb-brown');
+                el.classList.add('text-cb-milk');
+            });
+
+            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+            const activeNav = document.getElementById(`nav-${tabId.split('-')[0]}`);
+            if (activeNav) {
+                activeNav.classList.add('bg-cb-pink', 'text-cb-brown');
+                activeNav.classList.remove('text-cb-milk');
+            }
+        }
+
+        // CURRENCY SYSTEM
+        function updateCurrency(curr) {
+            currentCurrency = curr;
+            renderProducts();
+            renderCart();
+            showNotification(`Currency switched to ${curr}`);
+        }
+
+        function formatPrice(priceUSD) {
+            const info = currencyRates[currentCurrency];
+            const converted = priceUSD * info.rate;
+            return `${info.symbol}${converted.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        }
+
+        // PRODUCTS RENDER & ACTIONS
+        function renderProducts() {
+            const grid = document.getElementById('productsGrid');
+            const emptyMsg = document.getElementById('emptyStoreMessage');
+            grid.innerHTML = '';
+
+            if (products.length === 0) {
+                emptyMsg.classList.remove('hidden');
+                return;
+            } else {
+                emptyMsg.classList.add('hidden');
+            }
+
+            products.forEach(p => {
+                const card = document.createElement('div');
+                card.className = "bg-white rounded-xl p-5 shadow-md border border-cb-pink-light flex flex-col justify-between hover:shadow-lg transition";
+                
+                let adminDeleteBtn = (currentRole !== 'public') ? 
+                    `<button onclick="deleteProduct(${p.id})" class="text-xs text-red-600 hover:underline mt-2">Delete Item</button>` : '';
+
+                card.innerHTML = `
+                    <div>
+                        <div class="w-full h-36 bg-cb-milk rounded-lg mb-4 flex items-center justify-center border border-cb-pink">
+                            <i data-lucide="package" class="w-12 h-12 text-cb-brown-light"></i>
+                        </div>
+                        <span class="text-xs font-bold text-cb-brown-light bg-cb-milk px-2 py-0.5 rounded border border-cb-pink">${p.category}</span>
+                        <h3 class="font-bold text-cb-brown text-base mt-2">${p.title}</h3>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-cb-pink-light flex items-center justify-between">
+                        <div>
+                            <span class="text-xs text-cb-brown-light block">Price</span>
+                            <span class="font-extrabold text-cb-brown-dark text-lg">${formatPrice(p.priceUSD)}</span>
+                        </div>
+                        <button onclick="addToCart(${p.id})" class="bg-cb-pink text-cb-brown p-2.5 rounded-lg hover:bg-cb-pink-light transition shadow">
+                            <i data-lucide="shopping-cart" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                    ${adminDeleteBtn}
+                `;
+                grid.appendChild(card);
+            });
+            lucide.createIcons();
+        }
+
+        // POS INVENTORY PUSH (SUPER ADMIN ONLY)
+        function executePOSPush() {
+            if (currentRole !== 'super_admin') return;
+
+            const btn = document.getElementById('posPushBtn');
+            const progress = document.getElementById('posSyncProgress');
+            const bar = document.getElementById('syncBar');
+            const percent = document.getElementById('syncPercent');
+            
+            btn.disabled = true;
+            progress.classList.remove('hidden');
+            let p = 0;
+
+            const timer = setInterval(() => {
+                p += 25;
+                bar.style.width = p + '%';
+                percent.innerText = p + '%';
+
+                if (p >= 100) {
+                    clearInterval(timer);
+                    products = [...posDatabasePayload]; // Push items from POS
+                    renderProducts();
+
+                    btn.disabled = false;
+                    progress.classList.add('hidden');
+                    
+                    const time = new Date().toLocaleTimeString();
+                    const logList = document.getElementById('posLogsList');
+                    logList.innerHTML = `<div>• [${time}] POS Push successful. ${products.length} products synced to site catalog.</div>` + logList.innerHTML;
+
+                    showNotification('POS Inventory successfully pushed to website catalog!');
+                }
+            }, 300);
+        }
+
+        // MODAL & SOCIALS LOGIC
+        function openAddProductModal() { document.getElementById('addProductModal').classList.remove('hidden'); }
+        function closeAddProductModal() { document.getElementById('addProductModal').classList.add('hidden'); }
+        
+        function handleCreateProduct(e) {
+            e.preventDefault();
+            const title = document.getElementById('newProdTitle').value;
+            const price = parseFloat(document.getElementById('newProdPrice').value);
+            const cat = document.getElementById('newProdCat').value;
+
+            products.push({ id: Date.now(), title, priceUSD: price, category: cat });
+            renderProducts();
+            closeAddProductModal();
+            showNotification('New product added to store!');
+        }
+
+        function deleteProduct(id) {
+            products = products.filter(p => p.id !== id);
+            renderProducts();
+            showNotification('Product removed.');
+        }
+
+        // ABOUT PAGE EDITING
+        function toggleEditAbout() {
+            const displayMode = document.getElementById('aboutDisplayMode');
+            const editForm = document.getElementById('aboutEditForm');
+            if (editForm.classList.contains('hidden')) {
+                editForm.classList.remove('hidden');
+                displayMode.classList.add('hidden');
+                document.getElementById('editStoryInput').value = document.getElementById('aboutStoryText').innerText;
+                document.getElementById('editCard1Input').value = document.getElementById('aboutCard1Desc').innerText;
+                document.getElementById('editCard2Input').value = document.getElementById('aboutCard2Desc').innerText;
+                document.getElementById('editCard3Input').value = document.getElementById('aboutCard3Desc').innerText;
+            } else {
+                editForm.classList.add('hidden');
+                displayMode.classList.remove('hidden');
+            }
+        }
+
+        function saveAboutContent(e) {
+            e.preventDefault();
+            document.getElementById('aboutStoryText').innerText = document.getElementById('editStoryInput').value;
+            document.getElementById('aboutCard1Desc').innerText = document.getElementById('editCard1Input').value;
+            document.getElementById('aboutCard2Desc').innerText = document.getElementById('editCard2Input').value;
+            document.getElementById('aboutCard3Desc').innerText = document.getElementById('editCard3Input').value;
+            toggleEditAbout();
+            showNotification('About Us page updated successfully!');
+        }
+
+        // SOCIALS LOGIC
+        function renderSocials() {
+            const grid = document.getElementById('socialsGrid');
+            grid.innerHTML = '';
+            socials.forEach(s => {
+                const card = document.createElement('div');
+                card.className = "bg-cb-milk p-4 rounded-lg border border-cb-pink flex justify-between items-center";
+                
+                let deleteBtn = (currentRole !== 'public') ? 
+                    `<button onclick="deleteSocial(${s.id})" class="text-xs text-red-600 hover:underline">Remove</button>` : '';
+
+                card.innerHTML = `
+                    <div>
+                        <h4 class="font-bold text-cb-brown">${s.platform}</h4>
+                        <a href="${s.url}" target="_blank" class="text-xs text-cb-brown-light hover:underline">${s.handle}</a>
+                    </div>
+                    ${deleteBtn}
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function openAddSocialModal() { document.getElementById('addSocialModal').classList.remove('hidden'); }
+        function closeAddSocialModal() { document.getElementById('addSocialModal').classList.add('hidden'); }
+
+        function handleCreateSocial(e) {
+            e.preventDefault();
+            const platform = document.getElementById('newSocialPlatform').value;
+            const handle = document.getElementById('newSocialHandle').value;
+            const url = document.getElementById('newSocialUrl').value;
+
+            socials.push({ id: Date.now(), platform, handle, url });
+            renderSocials();
+            closeAddSocialModal();
+            showNotification('Social handle added!');
+        }
+
+        function deleteSocial(id) {
+            socials = socials.filter(s => s.id !== id);
+            renderSocials();
+            showNotification('Social handle removed.');
+        }
+
+        // SECRET ADMIN USER MANAGEMENT LOGIC
+        function renderAdminUsers() {
+            const tbody = document.getElementById('adminUsersTable');
+            tbody.innerHTML = '';
+            adminUsers.forEach(u => {
+                const tr = document.createElement('tr');
+                tr.className = "border-b border-cb-pink-light";
+                
+                let actionBtn = (u.role.includes('Super Admin')) ? 
+                    '<span class="text-xs text-cb-brown-light italic">Owner Account</span>' :
+                    `<button onclick="removeAdmin(${u.id})" class="text-xs text-red-600 font-bold hover:underline">Revoke Access</button>`;
+
+                tr.innerHTML = `
+                    <td class="p-3 font-semibold">${u.email}</td>
+                    <td class="p-3"><span class="bg-cb-pink text-cb-brown text-xs px-2 py-0.5 rounded font-bold">${u.role}</span></td>
+                    <td class="p-3 text-xs text-cb-brown-light">${u.permissions}</td>
+                    <td class="p-3">${actionBtn}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function openInviteAdminModal() { document.getElementById('inviteAdminModal').classList.remove('hidden'); }
+        function closeInviteAdminModal() { document.getElementById('inviteAdminModal').classList.add('hidden'); }
+
+        function handleInviteAdmin(e) {
+            e.preventDefault();
+            const email = document.getElementById('newAdminEmail').value;
+            adminUsers.push({
+                id: Date.now(),
+                email,
+                role: 'Secondary Admin',
+                permissions: 'Manage Products & Content'
+            });
+            renderAdminUsers();
+            closeInviteAdminModal();
+            showNotification(`Granted Secondary Admin access to ${email}`);
+        }
+
+        function removeAdmin(id) {
+            adminUsers = adminUsers.filter(u => u.id !== id);
+            renderAdminUsers();
+            showNotification('Admin permissions revoked.');
+        }
+
+        // CART SYSTEM
+        function addToCart(productId) {
+            const prod = products.find(p => p.id === productId);
+            if (prod) {
+                cart.push(prod);
+                updateCartCount();
+                showNotification(`Added "${prod.title}" to cart`);
+            }
+        }
+
+        function updateCartCount() {
+            document.getElementById('cartCount').innerText = cart.length;
+        }
+
+        function toggleCartModal() {
+            const modal = document.getElementById('cartModal');
+            modal.classList.toggle('hidden');
+            if (!modal.classList.contains('hidden')) {
+                renderCart();
+            }
+        }
+
+        function renderCart() {
+            const list = document.getElementById('cartItemsList');
+            const totalDisplay = document.getElementById('cartTotalDisplay');
+            list.innerHTML = '';
+            
+            if (cart.length === 0) {
+                list.innerHTML = '<p class="text-xs text-cb-brown-light text-center py-4">Your cart is empty.</p>';
+                totalDisplay.innerText = formatPrice(0);
+                return;
+            }
+
+            let total = 0;
+            cart.forEach((item, index) => {
+                total += item.priceUSD;
+                const row = document.createElement('div');
+                row.className = "flex justify-between items-center text-xs bg-cb-milk p-2 rounded border border-cb-pink";
+                row.innerHTML = `
+                    <span class="font-semibold text-cb-brown">${item.title}</span>
+                    <div class="flex items-center gap-2">
+                        <span class="font-bold text-cb-brown">${formatPrice(item.priceUSD)}</span>
+                        <button onclick="removeFromCart(${index})" class="text-red-600 font-bold hover:underline">✕</button>
+                    </div>
+                `;
+                list.appendChild(row);
+            });
+            totalDisplay.innerText = formatPrice(total);
+        }
+
+        function removeFromCart(index) {
+            cart.splice(index, 1);
+            updateCartCount();
+            renderCart();
+        }
+
+        function checkoutCart() {
+            if (cart.length === 0) return;
+            showNotification('Order inquiry submitted to Cruz-B Enterprise!');
+            cart = [];
+            updateCartCount();
+            toggleCartModal();
+        }
+
+        function handleContactSubmit(e) {
+            e.preventDefault();
+            showNotification('Thank you! Your message has been sent to Cruz-B Enterprise.');
+            e.target.reset();
+        }
+
+        // HELPER NOTIFICATIONS
+        function showNotification(msg) {
+            const area = document.getElementById('notificationArea');
+            document.getElementById('notificationText').innerText = msg;
+            area.classList.remove('hidden');
+            setTimeout(() => {
+                hideNotification();
+            }, 4000);
+        }
+
+        function hideNotification() {
+            document.getElementById('notificationArea').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
